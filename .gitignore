@@ -1,2 +1,5 @@
-.idea
-.venv
+.DS_Store
+venv/
+.idea/
+.venv/
+__pycache__/
