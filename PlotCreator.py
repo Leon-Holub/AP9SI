@@ -1,6 +1,7 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
+
 def plot_genre_distribution(df: pd.DataFrame, save_path: str | None = None) -> None:
     """
     Creates a bar chart showing the frequency of favorite music genres.
@@ -26,6 +27,60 @@ def plot_genre_distribution(df: pd.DataFrame, save_path: str | None = None) -> N
     plt.tight_layout()
 
     show_or_save_plot(fig, save_path)
+
+
+def plot_listening_pie(df: pd.DataFrame, save_path: str | None = None, show: bool = True) -> None:
+    """
+    Creates a pie chart showing how many respondents listen to music daily (yes/no),
+    including a legend with absolute counts.
+
+    Parameters:
+        df (pd.DataFrame): Dataset containing 'Hours per day' column.
+        save_path (str, optional): If provided, saves the plot to this path.
+        show (bool): Whether to display the plot (default True).
+    """
+    if "Hours per day" not in df.columns:
+        print("⚠️ Column 'Hours per day' not found in dataset.")
+        return
+
+    df_copy = df.copy()
+    df_copy["Hours per day"] = pd.to_numeric(df_copy["Hours per day"], errors="coerce")
+
+    df_copy["Listens music daily"] = df_copy["Hours per day"].apply(
+        lambda x: "Yes" if pd.notna(x) and x > 0 else "No"
+    )
+
+    counts = df_copy["Listens music daily"].value_counts()
+    labels = counts.index
+    values = counts.values
+
+    colors = ["#4CAF50", "#E57373"]  # zelená = ano, červená = ne
+
+    # Vykreslení koláče
+    fig, ax = plt.subplots(figsize=(6, 6))
+    wedges, texts, autotexts = ax.pie(
+        values,
+        labels=None,
+        autopct="%1.1f%%",
+        startangle=90,
+        colors=colors,
+        textprops={"color": "white", "fontsize": 11}
+    )
+
+    legend_labels = [f"{label}: {count} respondents" for label, count in zip(labels, values)]
+    ax.legend(
+        wedges,
+        legend_labels,
+        title="Listening daily",
+        loc="center left",
+        bbox_to_anchor=(1, 0.5),
+        fontsize=10
+    )
+
+    ax.set_title("Do people listen to music daily?", fontsize=14)
+    plt.tight_layout()
+
+    show_or_save_plot(fig, save_path, show)
 
 def show_or_save_plot(fig: plt.Figure, save_path: str | None = None, show: bool = True) -> None:
     """
