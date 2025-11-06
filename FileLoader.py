@@ -62,11 +62,7 @@ def _filter_valid_rows(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def _drop_irrelevant_columns(df: pd.DataFrame) -> pd.DataFrame:
-    if "Permissions" in df.columns:
-        df = df.drop(columns=["Permissions"])
-        print("🗑️ Column 'Permissions' removed.")
-    else:
-        print("ℹ️ Column 'Permissions' not found — skipping.")
+    df = df.drop(columns=["Permissions", "Timestamp"])
     return df
 
 
