@@ -95,7 +95,7 @@ def show_or_save_plot(fig: plt.Figure, save_path: str | None = None, show: bool 
         fig.savefig(save_path, dpi=300, bbox_inches='tight')
         print(f"💾 Plot saved to: {save_path}")
 
-    if show and not save_path:
+    if show:
         plt.show()
 
     plt.close(fig)
