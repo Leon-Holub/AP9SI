@@ -23,18 +23,37 @@ def analyze_depression_by_genre(df: pd.DataFrame, save_path: str | None = None, 
         print(f"⚠️ Missing required columns: {required_cols}")
         return
 
+    # Odstraníme NaN hodnoty
     data = df.dropna(subset=required_cols)
 
+    # --- ANOVA test ---
     grouped = [group["Depression"].values for _, group in data.groupby("Fav genre") if len(group) > 2]
     f_stat, p_val = f_oneway(*grouped)
     print(f"📊 ANOVA test:")
     print(f"   F-statistic = {f_stat:.3f}")
     print(f"   p-value     = {p_val:.5f}")
     if p_val < 0.05:
-        print("✅ Výsledek je statisticky významný — míra deprese se mezi žánry liší.")
+        print("✅ Výsledek je statisticky významný — míra deprese se mezi žánry liší.\n")
     else:
-        print("ℹ️ Rozdíly mezi žánry nejsou statisticky významné.")
+        print("ℹ️ Rozdíly mezi žánry nejsou statisticky významné.\n")
 
+    # --- Přehled průměrných hodnot pro každý žánr ---
+    summary = (
+        data.groupby("Fav genre")["Depression"]
+        .agg(["count", "mean", "median", "std"])
+        .reset_index()
+        .sort_values("median", ascending=False)
+    )
+
+    print("📋 Přehled hodnot deprese podle žánrů:")
+    print(summary.to_string(index=False, formatters={
+        "mean": "{:.2f}".format,
+        "median": "{:.2f}".format,
+        "std": "{:.2f}".format
+    }))
+    print()
+
+    # --- Vizualizace ---
     fig, ax = plt.subplots(figsize=(10, 6))
     sns.boxplot(data=data, x="Fav genre", y="Depression", ax=ax, palette="Set2", hue="Fav genre")
 
