@@ -5,6 +5,16 @@ from scipy.stats import f_oneway, pearsonr, ttest_ind
 
 from PlotCreator import show_or_save_plot
 
+# --- NEW: imports for Q3 (prediction) ---
+import numpy as np
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, RocCurveDisplay
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.linear_model import LogisticRegression
+import os
+
+
+
 
 def analyze_depression_by_genre(df: pd.DataFrame, save_path: str | None = None, show: bool = True):
     """
@@ -195,3 +205,98 @@ def analyze_music_while_working(df: pd.DataFrame, save_path: str | None = None, 
     plt.tight_layout()
 
     show_or_save_plot(fig, save_path, show)
+
+def analyze_disorder_prediction(df: pd.DataFrame, outdir: str = "plots", show: bool = True, threshold: int = 6):
+    """
+    Q3: Lze na základě hudebních preferencí predikovat riziko duševní poruchy?
+    Vytvoří binární cíl 'MentalDisorderRisk' z (Anxiety/Depression/Insomnia/OCD > threshold),
+    natrénuje Logistic Regression a Random Forest, uloží metriky a grafy (ROC + feature importance).
+    """
+    required_targets = ["Anxiety", "Depression", "Insomnia", "OCD"]
+    required_features = ["Fav genre", "Hours per day", "While working", "Music effects", "Age"]
+
+    # --- Kontrola sloupců ---
+    if not all(c in df.columns for c in required_targets):
+        print(f"⚠️ Missing target components: {required_targets}")
+        return
+    # feature sloupce použijeme jen ty, které v datasetu reálně jsou
+    features_present = [c for c in required_features if c in df.columns]
+    if not features_present:
+        print("⚠️ No predictive features found.")
+        return
+
+    # vytvoří podsložku pro tuto analýzu (např. plots/Q3_predikce)
+    outdir = os.path.join(outdir, "Q3_predikce")
+    os.makedirs(outdir, exist_ok=True)
+
+    # --- Target: MentalDisorderRisk ---
+    df = df.copy()
+    for num_col in ["Anxiety", "Depression", "Insomnia", "OCD", "Hours per day", "Age"]:
+        if num_col in df.columns:
+            df[num_col] = pd.to_numeric(df[num_col], errors="coerce")
+
+    df["MentalDisorderRisk"] = (
+        (df[required_targets] > threshold).any(axis=1)
+    ).astype(int)
+
+    # --- Příprava X,y ---
+    model_df = df[features_present + ["MentalDisorderRisk"]].dropna().copy()
+    # one-hot pro kategoriální
+    X = pd.get_dummies(model_df[features_present], drop_first=True)
+    y = model_df["MentalDisorderRisk"].astype(int)
+
+    # --- Train/test split ---
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=0.30, random_state=42, stratify=y
+    )
+
+    # --- Modely ---
+    rf = RandomForestClassifier(n_estimators=300, random_state=42, n_jobs=-1)
+    rf.fit(X_train, y_train)
+    rf_pred = rf.predict(X_test)
+    rf_prob = rf.predict_proba(X_test)[:, 1]
+
+    lr = LogisticRegression(max_iter=1000, n_jobs=-1)
+    lr.fit(X_train, y_train)
+    lr_pred = lr.predict(X_test)
+    lr_prob = lr.predict_proba(X_test)[:, 1]
+
+    # --- Metriky ---
+    metrics = pd.DataFrame([
+        {"model": "RandomForest",
+         "accuracy": accuracy_score(y_test, rf_pred),
+         "f1": f1_score(y_test, rf_pred),
+         "roc_auc": roc_auc_score(y_test, rf_prob)},
+        {"model": "LogisticRegression",
+         "accuracy": accuracy_score(y_test, lr_pred),
+         "f1": f1_score(y_test, lr_pred),
+         "roc_auc": roc_auc_score(y_test, lr_prob)},
+    ])
+    print("📊 Q3 metrics:\n", metrics.round(4).to_string(index=False))
+
+    # --- ROC křivky ---
+    fig1 = plt.figure()
+    RocCurveDisplay.from_estimator(rf, X_test, y_test)
+    plt.title("ROC – RandomForest (Q3)")
+    show_or_save_plot(fig1, os.path.join(outdir, "roc_randomforest_q3.png"), show)
+
+    fig2 = plt.figure()
+    RocCurveDisplay.from_estimator(lr, X_test, y_test)
+    plt.title("ROC – LogisticRegression (Q3)")
+    show_or_save_plot(fig2, os.path.join(outdir, "roc_logreg_q3.png"), show)
+
+    # --- Feature importance (RF) ---
+    importances = pd.Series(rf.feature_importances_, index=X.columns).sort_values(ascending=False)
+    topk = importances.head(15)[::-1]
+    fig3, ax = plt.subplots(figsize=(7, 6))
+    topk.plot(kind="barh", ax=ax)
+    ax.set_title("Top 15 feature importances – RF (Q3)")
+    ax.set_xlabel("Gini importance")
+    plt.tight_layout()
+    show_or_save_plot(fig3, os.path.join(outdir, "feature_importance_rf_q3.png"), show)
+
+    # --- Ulož metriky do CSV (pro tabulky v práci) ---
+    metrics.to_csv(os.path.join(outdir, "metrics_q3.csv"), index=False)
+
+    return metrics
+

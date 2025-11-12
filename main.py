@@ -1,6 +1,7 @@
 from FileLoader import load_and_preprocess_dataset
 from PlotCreator import plot_genre_distribution, plot_listening_pie
 from ResearchQuestions import analyze_depression_by_genre, analyze_music_frequency_effects, analyze_music_while_working
+from ResearchQuestions import analyze_disorder_prediction
 
 import pandas as pd
 
@@ -64,3 +65,5 @@ if __name__ == "__main__":
     analyze_depression_by_genre(df, "plots/depression_by_genre.png")
     analyze_music_frequency_effects(df, "plots/music_frequency_effects.png")
     analyze_music_while_working(df, "plots/music_while_working.png")
+    analyze_disorder_prediction(df, outdir="plots", show=False) # Q3 – predikce rizika (ROC + feature importance + metrics CSV)
+
