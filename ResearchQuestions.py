@@ -6,7 +6,6 @@ from scipy.stats import f_oneway, pearsonr, ttest_ind
 from PlotCreator import show_or_save_plot
 
 # --- NEW: imports for Q3 (prediction) ---
-import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score, f1_score, roc_auc_score, RocCurveDisplay
 from sklearn.ensemble import RandomForestClassifier
@@ -300,3 +299,94 @@ def analyze_disorder_prediction(df: pd.DataFrame, outdir: str = "plots", show: b
 
     return metrics
 
+
+
+def analyze_age_psychological_state(df, save_dir=None, show=True):
+    """
+    Analyzes relationship between Age and psychological variables:
+    Depression, Anxiety, Insomnia, OCD.
+    Performs correlation, ANOVA and produces barplots.
+    """
+
+    psych_cols = ["Depression", "Anxiety", "Insomnia", "OCD"]
+    required = ["Age"] + psych_cols
+
+    # Kontrola sloupců
+    if not all(c in df.columns for c in required):
+        print(f"⚠️ Missing required columns: {required}")
+        return
+
+    # Odstranění chyb
+    data = df.dropna(subset=required).copy()
+    data = data[data["Age"] > 0]
+
+    # Vytvoření věkových skupin
+    bins = [0, 19, 29, 39, 49, 59, 120]
+    labels = ["<20", "20–29", "30–39", "40–49", "50–59", "60+"]
+    data["Age group"] = pd.cut(data["Age"], bins=bins, labels=labels)
+
+    # Analýza pro každou psych. proměnnou
+    for col in psych_cols:
+        print(f"\n==============================")
+        print(f"🧠 ANALÝZA: {col}")
+        print(f"==============================")
+
+        # 1️⃣ Korelace
+        r, p = pearsonr(data["Age"], data[col])
+        print(f"📈 Korelace Age × {col}: r = {r:.3f}, p = {p:.5f}")
+        if p < 0.05:
+            print("   ✅ Statisticky významná souvislost.")
+        else:
+            print("   ℹ️ Bez statisticky významné souvislosti.")
+
+        # 2️⃣ ANOVA
+        groups = [
+            g[col].values
+            for _, g in data.groupby("Age group", observed=True)
+            if len(g) > 2
+        ]
+
+        f_stat, p_val = f_oneway(*groups)
+        print(f"\n📊 ANOVA mezi věkovými skupinami:")
+        print(f"   F = {f_stat:.3f}, p = {p_val:.5f}")
+        if p_val < 0.05:
+            print("   ✅ Věkové skupiny se významně liší.")
+        else:
+            print("   ℹ️ Bez významných rozdílů.")
+
+        # 3️⃣ Tabulka
+        summary = data.groupby("Age group", observed=True)[col].agg(
+            ["count", "mean", "median", "std"]
+        )
+        print("\n📋 Přehled podle věku:")
+        print(summary.to_string(formatters={
+            "mean": "{:.2f}".format,
+            "median": "{:.2f}".format,
+            "std": "{:.2f}".format
+        }))
+
+        # 4️⃣ Graf
+        fig, ax = plt.subplots(figsize=(8, 5))
+        sns.barplot(
+            data=data,
+            x="Age group",
+            y=col,
+            hue="Age group",
+            legend=False,
+            palette="Set2",
+            errorbar=("ci", 95),
+            ax=ax
+        )
+        ax.set_title(f"Průměrná hodnota {col} podle věku")
+        ax.set_xlabel("Věková skupina")
+        ax.set_ylabel(col)
+        plt.tight_layout()
+
+        # Uložení/zobrazení přes tvoji globální funkci
+        filename = f"{col}_by_age.png" if save_dir else None
+        if save_dir:
+            path = f"{save_dir}/{filename}"
+        else:
+            path = None
+
+        show_or_save_plot(fig, path, show)
