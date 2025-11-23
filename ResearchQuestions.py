@@ -390,3 +390,82 @@ def analyze_age_psychological_state(df, save_dir=None, show=True):
             path = None
 
         show_or_save_plot(fig, path, show)
+
+
+def analyze_age_music_effect(df, save_path=None, show=True):
+    """
+    Analyzes whether age influences how people perceive the effect of music on
+    their mental health (Music effects: -1, 0, 1).
+
+    Performs:
+    - Pearson correlation (Age × Music effects)
+    - ANOVA across age groups
+    - Summary table
+    - Clean barplot (mean Music effects per age group)
+    """
+
+    # Kontrola sloupců
+    required_cols = ["Age", "Music effects"]
+    if not all(col in df.columns for col in required_cols):
+        print(f"⚠️ Missing required columns: {required_cols}")
+        return
+
+    # Čištění dat
+    data = df.dropna(subset=required_cols).copy()
+    data = data[data["Age"] > 0]
+
+    # 🔹 1) Korelace Age × Music effects
+    r, p = pearsonr(data["Age"], data["Music effects"])
+    print("📈 Korelace mezi věkem a Music effects:")
+    print(f"   r = {r:.3f}, p = {p:.5f}")
+    print("   " + ("✅ Statisticky významná souvislost." if p < 0.05 else "ℹ️ Bez významné souvislosti."))
+
+    # 🔹 2) Vytvoření věkových skupin
+    bins = [0, 19, 29, 39, 49, 59, 120]
+    labels = ["<20", "20–29", "30–39", "40–49", "50–59", "60+"]
+    data["Age group"] = pd.cut(data["Age"], bins=bins, labels=labels)
+
+    # 🔹 3) ANOVA
+    groups = [
+        g["Music effects"].values
+        for _, g in data.groupby("Age group", observed=True)
+        if len(g) > 2
+    ]
+    f_stat, p_val = f_oneway(*groups)
+    print("\n📊 ANOVA test (věkové skupiny × Music effects):")
+    print(f"   F = {f_stat:.3f}, p = {p_val:.5f}")
+    print("   " + ("✅ Významné rozdíly mezi věkovými skupinami."
+                   if p_val < 0.05 else
+                   "ℹ️ Žádné statisticky významné rozdíly."))
+
+    # 🔹 4) Tabulka souhrnných statistik
+    summary = data.groupby("Age group", observed=True)["Music effects"].agg(
+        ["count", "mean", "median", "std"]
+    )
+    summary = summary.round(2)
+
+    print("\n📋 Průměrné hodnoty Music effects podle věku:")
+    print(summary)
+
+    # 🔹 5) Vizualizace – čistý barplot
+    fig, ax = plt.subplots(figsize=(8, 5))
+    sns.barplot(
+        data=data,
+        x="Age group",
+        y="Music effects",
+        hue="Age group",
+        legend=False,
+        palette="Set2",
+        errorbar=("ci", 95),
+        ax=ax
+    )
+
+    ax.set_title("Vnímaný účinek hudby na duševní zdraví podle věku")
+    ax.set_xlabel("Věková skupina")
+    ax.set_ylabel("Music effect (-1=Worsen, 0=No effect, 1=Improve)")
+    plt.tight_layout()
+
+    # Uložení nebo zobrazení
+    show_or_save_plot(fig, save_path, show)
+
+    return summary
