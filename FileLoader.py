@@ -66,23 +66,28 @@ def _drop_irrelevant_columns(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
+import pandas as pd
+
 def _transform_music_effects(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Transforms the 'Music effects' column into numeric values.
-    Improve -> 1, No effect -> 0, Worsen -> -1
+    Transforms 'Music effects' into an ordered categorical variable
+    instead of numeric (-1,0,1), as recommended.
+    Order: Worsen < No effect < Improve
     """
-    mapping = {
-        "Improve": 1,
-        "No effect": 0,
-        "Worsen": -1
-    }
-
-    if "Music effects" in df.columns:
-        df["Music effects"] = df["Music effects"].map(mapping)
-        print("🎵 'Music effects' transformed to numeric values.")
-    else:
+    if "Music effects" not in df.columns:
         print("⚠️ Column 'Music effects' not found.")
+        return df
+
+    df["Music effects"] = pd.Categorical(
+        df["Music effects"],
+        categories=["Worsen", "No effect", "Improve"],
+        ordered=True
+    )
+
+    print("🎵 'Music effects' transformed into ordered categorical variable.")
     return df
+
+
 
 
 def _preprocess_dataset(df: pd.DataFrame) -> pd.DataFrame:

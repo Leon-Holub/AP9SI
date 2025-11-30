@@ -392,80 +392,60 @@ def analyze_age_psychological_state(df, save_dir=None, show=True):
         show_or_save_plot(fig, path, show)
 
 
-def analyze_age_music_effect(df, save_path=None, show=True):
+def analyze_age_music_effect(df, save_dir="plots/age_effects", show=True):
     """
-    Analyzes whether age influences how people perceive the effect of music on
-    their mental health (Music effects: -1, 0, 1).
+    Analyzes how people of different age groups perceive the effect of music.
+    Creates SEPARATE plots for each age group showing counts of:
+    - Worsen
+    - No effect
+    - Improve
 
-    Performs:
-    - Pearson correlation (Age × Music effects)
-    - ANOVA across age groups
-    - Summary table
-    - Clean barplot (mean Music effects per age group)
+    Music effects is used as an ordered categorical variable.
     """
 
-    # Kontrola sloupců
     required_cols = ["Age", "Music effects"]
-    if not all(col in df.columns for col in required_cols):
+    if not all(c in df.columns for c in required_cols):
         print(f"⚠️ Missing required columns: {required_cols}")
         return
 
-    # Čištění dat
     data = df.dropna(subset=required_cols).copy()
     data = data[data["Age"] > 0]
 
-    # 🔹 1) Korelace Age × Music effects
-    r, p = pearsonr(data["Age"], data["Music effects"])
-    print("📈 Korelace mezi věkem a Music effects:")
-    print(f"   r = {r:.3f}, p = {p:.5f}")
-    print("   " + ("✅ Statisticky významná souvislost." if p < 0.05 else "ℹ️ Bez významné souvislosti."))
-
-    # 🔹 2) Vytvoření věkových skupin
+    # Create age groups
     bins = [0, 19, 29, 39, 49, 59, 120]
     labels = ["<20", "20–29", "30–39", "40–49", "50–59", "60+"]
     data["Age group"] = pd.cut(data["Age"], bins=bins, labels=labels)
 
-    # 🔹 3) ANOVA
-    groups = [
-        g["Music effects"].values
-        for _, g in data.groupby("Age group", observed=True)
-        if len(g) > 2
-    ]
-    f_stat, p_val = f_oneway(*groups)
-    print("\n📊 ANOVA test (věkové skupiny × Music effects):")
-    print(f"   F = {f_stat:.3f}, p = {p_val:.5f}")
-    print("   " + ("✅ Významné rozdíly mezi věkovými skupinami."
-                   if p_val < 0.05 else
-                   "ℹ️ Žádné statisticky významné rozdíly."))
+    os.makedirs(save_dir, exist_ok=True)
 
-    # 🔹 4) Tabulka souhrnných statistik
-    summary = data.groupby("Age group", observed=True)["Music effects"].agg(
-        ["count", "mean", "median", "std"]
-    )
-    summary = summary.round(2)
+    # For each age group: make one plot
+    for group in labels:
+        subset = data[data["Age group"] == group]
 
-    print("\n📋 Průměrné hodnoty Music effects podle věku:")
-    print(summary)
+        if subset.empty:
+            continue
 
-    # 🔹 5) Vizualizace – čistý barplot
-    fig, ax = plt.subplots(figsize=(8, 5))
-    sns.barplot(
-        data=data,
-        x="Age group",
-        y="Music effects",
-        hue="Age group",
-        legend=False,
-        palette="Set2",
-        errorbar=("ci", 95),
-        ax=ax
-    )
+        counts = subset["Music effects"].value_counts().reindex(
+            ["Worsen", "No effect", "Improve"], fill_value=0
+        )
 
-    ax.set_title("Vnímaný účinek hudby na duševní zdraví podle věku")
-    ax.set_xlabel("Věková skupina")
-    ax.set_ylabel("Music effect (-1=Worsen, 0=No effect, 1=Improve)")
-    plt.tight_layout()
+        fig, ax = plt.subplots(figsize=(6,4))
+        sns.barplot(
+            x=counts.index,
+            y=counts.values,
+            ax=ax
+        )
 
-    # Uložení nebo zobrazení
-    show_or_save_plot(fig, save_path, show)
+        ax.set_title(f"Music effect perception – Age {group}")
+        ax.set_xlabel("Music effect")
+        ax.set_ylabel("Count")
 
-    return summary
+        plt.tight_layout()
+
+        # Save each figure separately
+        filename = f"music_effect_age_{group.replace('<','under_').replace('+','plus')}.png"
+        save_path = os.path.join(save_dir, filename)
+
+        show_or_save_plot(fig, save_path, show)
+
+    print("✅ All age-group plots generated.")
