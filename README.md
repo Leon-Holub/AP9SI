@@ -9,11 +9,13 @@
     - matplotlib
 
 **Create an environment**
+
 ```bash
 python3 -m venv .venv
 ```
 
 **Activate environment**
+
 ```bash
 # MacOS or Linux
 source .venv/bin/activate
@@ -23,11 +25,13 @@ source .venv/bin/activate
 ```
 
 **Install packages**
+
 ```bash
 pip install -r requirements.txt
 ```
 
 **Run project**
+
 ```bash
 # MacOS or Linux
 python3 main.py
