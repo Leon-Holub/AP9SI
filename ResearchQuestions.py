@@ -64,11 +64,18 @@ def analyze_depression_by_genre(df: pd.DataFrame, save_path: str | None = None, 
 
     # --- Vizualizace ---
     fig, ax = plt.subplots(figsize=(10, 6))
-    sns.boxplot(data=data, x="Fav genre", y="Depression", ax=ax, palette="Set2", hue="Fav genre")
 
-    ax.set_title("Depression levels across favorite music genres", fontsize=14)
-    ax.set_xlabel("Favorite Music Genre", fontsize=12)
-    ax.set_ylabel("Depression Score", fontsize=12)
+    ax.set_title("Depression Levels Across Favorite Music Genres")
+    ax.set_xlabel("Favorite Music Genre")
+    ax.set_ylabel("Depression Score")
+
+    sns.boxplot(
+        data=data,
+        x="Fav genre",
+        y="Depression",
+        ax=ax
+    )
+
     plt.xticks(rotation=45, ha="right")
     plt.tight_layout()
 
@@ -137,13 +144,13 @@ def analyze_music_frequency_effects(df: pd.DataFrame, save_path: str | None = No
     # --- Grafická část ---
     fig, axes = plt.subplots(1, 2, figsize=(12, 5))
 
-    sns.regplot(data=data, x="Hours per day", y="Anxiety", ax=axes[0], color="#2196F3")
-    axes[0].set_title("Relationship between Listening Time and Anxiety")
+    sns.regplot(x="Hours per day", y="Anxiety", data=data, ax=axes[0], scatter_kws={'alpha': 0.6})
+    axes[0].set_title("Relationship Between Listening Time and Anxiety")
     axes[0].set_xlabel("Hours of Music per Day")
     axes[0].set_ylabel("Anxiety Level")
 
-    sns.regplot(data=data, x="Hours per day", y="Depression", ax=axes[1], color="#E91E63")
-    axes[1].set_title("Relationship between Listening Time and Depression")
+    sns.regplot(x="Hours per day", y="Depression", data=data, ax=axes[1], scatter_kws={'alpha': 0.6})
+    axes[1].set_title("Relationship Between Listening Time and Depression")
     axes[1].set_xlabel("Hours of Music per Day")
     axes[1].set_ylabel("Depression Level")
 
@@ -195,13 +202,12 @@ def analyze_music_while_working(df: pd.DataFrame, save_path: str | None = None, 
 
     # --- Vizualizace ---
     fig, ax = plt.subplots(figsize=(6, 5))
-    sns.boxplot(data=data, x="While working", y="Depression", palette=["#E57373", "#81C784"], ax=ax,
-                hue="While working")
 
-    ax.set_title("Depression levels by music listening during work")
-    ax.set_xlabel("Listening to music while working")
+    ax.set_title("Depression Levels by Music Listening During Work")
+    ax.set_xlabel("Listening to Music While Working")
     ax.set_ylabel("Depression Score")
-    plt.tight_layout()
+
+    sns.boxplot(data=data, x="While working", y="Depression", ax=ax)
 
     show_or_save_plot(fig, save_path, show)
 

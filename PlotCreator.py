@@ -1,6 +1,24 @@
 import matplotlib.pyplot as plt
 import pandas as pd
 
+import seaborn as sns
+
+sns.set_theme(
+    style="whitegrid",
+    palette="Set2",
+    font_scale=1.2,
+)
+
+plt.rcParams["figure.dpi"] = 120
+plt.rcParams["axes.titleweight"] = "bold"
+plt.rcParams["axes.labelweight"] = "bold"
+plt.rcParams["axes.edgecolor"] = "#333333"
+plt.rcParams["axes.labelcolor"] = "#333333"
+plt.rcParams["xtick.color"] = "#333333"
+plt.rcParams["ytick.color"] = "#333333"
+plt.rcParams["grid.color"] = "0.85"
+plt.rcParams["grid.linestyle"] = "--"
+plt.rcParams["legend.frameon"] = False
 
 def plot_genre_distribution(df: pd.DataFrame, save_path: str | None = None) -> None:
     """
