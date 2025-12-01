@@ -20,14 +20,8 @@ plt.rcParams["grid.color"] = "0.85"
 plt.rcParams["grid.linestyle"] = "--"
 plt.rcParams["legend.frameon"] = False
 
-def plot_genre_distribution(df: pd.DataFrame, save_path: str | None = None) -> None:
-    """
-    Creates a bar chart showing the frequency of favorite music genres.
 
-    Parameters:
-        df (pd.DataFrame): The dataset containing 'Fav genre' column.
-        save_path (str, optional): If provided, saves the plot to this path.
-    """
+def plot_genre_distribution(df: pd.DataFrame, save_path: str | None = None, show=True) -> None:
     if "Fav genre" not in df.columns:
         print("⚠️ Column 'Fav genre' not found in dataset.")
         return
@@ -35,28 +29,22 @@ def plot_genre_distribution(df: pd.DataFrame, save_path: str | None = None) -> N
     genre_counts = df["Fav genre"].value_counts().sort_values(ascending=False)
 
     fig, ax = plt.subplots(figsize=(10, 6))
-    genre_counts.plot(kind="bar", edgecolor="black", ax=ax)
+    sns.barplot(
+        x=genre_counts.index,
+        y=genre_counts.values,
+        ax=ax
+    )
 
-    ax.set_title("Frequency of Favorite Music Genres", fontsize=14)
-    ax.set_xlabel("Music Genre", fontsize=12)
-    ax.set_ylabel("Number of Respondents", fontsize=12)
+    ax.set_title("Frequency of Favorite Music Genres")
+    ax.set_xlabel("Music Genre")
+    ax.set_ylabel("Number of Respondents")
     plt.xticks(rotation=45, ha="right")
-    ax.grid(axis="y", linestyle="--", alpha=0.7)
+
     plt.tight_layout()
+    show_or_save_plot(fig, save_path, show)
 
-    show_or_save_plot(fig, save_path)
 
-
-def plot_listening_pie(df: pd.DataFrame, save_path: str | None = None, show: bool = True) -> None:
-    """
-    Creates a pie chart showing how many respondents listen to music daily (yes/no),
-    including a legend with absolute counts.
-
-    Parameters:
-        df (pd.DataFrame): Dataset containing 'Hours per day' column.
-        save_path (str, optional): If provided, saves the plot to this path.
-        show (bool): Whether to display the plot (default True).
-    """
+def plot_listening_pie(df: pd.DataFrame, save_path: str | None = None, show=True) -> None:
     if "Hours per day" not in df.columns:
         print("⚠️ Column 'Hours per day' not found in dataset.")
         return
@@ -72,9 +60,9 @@ def plot_listening_pie(df: pd.DataFrame, save_path: str | None = None, show: boo
     labels = counts.index
     values = counts.values
 
-    colors = ["#4CAF50", "#E57373"]  # zelená = ano, červená = ne
+    # get two nice colors from seaborn palette
+    colors = sns.color_palette("Set2")[:2]
 
-    # Vykreslení koláče
     fig, ax = plt.subplots(figsize=(6, 6))
     wedges, texts, autotexts = ax.pie(
         values,
@@ -89,16 +77,17 @@ def plot_listening_pie(df: pd.DataFrame, save_path: str | None = None, show: boo
     ax.legend(
         wedges,
         legend_labels,
-        title="Listening daily",
+        title="Listening Daily",
         loc="center left",
         bbox_to_anchor=(1, 0.5),
         fontsize=10
     )
 
-    ax.set_title("Do people listen to music daily?", fontsize=14)
+    ax.set_title("Do People Listen to Music Daily?")
     plt.tight_layout()
 
     show_or_save_plot(fig, save_path, show)
+
 
 def show_or_save_plot(fig: plt.Figure, save_path: str | None = None, show: bool = True) -> None:
     """
