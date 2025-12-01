@@ -66,6 +66,6 @@ if __name__ == "__main__":
     analyze_depression_by_genre(df, "plots/depression_by_genre.png")
     analyze_music_frequency_effects(df, "plots/music_frequency_effects.png")
     analyze_music_while_working(df, "plots/music_while_working.png")
-    analyze_disorder_prediction(df, outdir="plots", show=False)  # Q3 – predikce rizika (ROC + feature importance + metrics CSV)
+    analyze_disorder_prediction(df, outdir="plots")  # Q3 – predikce rizika (ROC + feature importance + metrics CSV)
     # analyze_age_psychological_state(df, "plots/") Nakonec nevyužijeme - bullshit otázka
     analyze_age_music_effect(df, "plots/age_music_effect")

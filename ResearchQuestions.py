@@ -280,19 +280,22 @@ def analyze_disorder_prediction(df: pd.DataFrame, outdir: str = "plots", show: b
     print("📊 Q3 metrics:\n", metrics.round(4).to_string(index=False))
 
     # --- ROC křivky ---
-    fig1 = plt.figure()
-    RocCurveDisplay.from_estimator(rf, X_test, y_test)
-    plt.title("ROC – RandomForest (Q3)")
+    fig1, ax1 = plt.subplots(figsize=(6, 5))
+    RocCurveDisplay.from_estimator(rf, X_test, y_test, ax=ax1)
+    ax1.set_title("ROC – RandomForest (Q3)")
+    plt.tight_layout()
     show_or_save_plot(fig1, os.path.join(outdir, "roc_randomforest_q3.png"), show)
 
-    fig2 = plt.figure()
-    RocCurveDisplay.from_estimator(lr, X_test, y_test)
-    plt.title("ROC – LogisticRegression (Q3)")
+    fig2, ax2 = plt.subplots(figsize=(6, 5))
+    RocCurveDisplay.from_estimator(lr, X_test, y_test, ax=ax2)
+    ax2.set_title("ROC – Logistic Regression (Q3)")
+    plt.tight_layout()
     show_or_save_plot(fig2, os.path.join(outdir, "roc_logreg_q3.png"), show)
 
     # --- Feature importance (RF) ---
     importances = pd.Series(rf.feature_importances_, index=X.columns).sort_values(ascending=False)
     topk = importances.head(15)[::-1]
+
     fig3, ax = plt.subplots(figsize=(7, 6))
     topk.plot(kind="barh", ax=ax)
     ax.set_title("Top 15 feature importances – RF (Q3)")
