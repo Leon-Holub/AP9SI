@@ -63,9 +63,18 @@ if __name__ == "__main__":
     plot_listening_pie(df, "plots/listening_pie.png")
     summarize_columns(df)
 
+    print("\n\nRQ1: Do depression levels differ across music genres?")
     analyze_depression_by_genre(df, "plots/depression_by_genre.png")
+
+    print("\n\nRQ2: Does music listening frequency relate to anxiety or depression?")
     analyze_music_frequency_effects(df, "plots/music_frequency_effects.png")
-    analyze_music_while_working(df, "plots/music_while_working.png")
+
+    print("\n\nRQ3: Can mental disorder risk be predicted from music preferences?")
     analyze_disorder_prediction(df, outdir="plots")  # Q3 – predikce rizika (ROC + feature importance + metrics CSV)
+
+    print("\n\nRQ4: Does listening to music while working influence depression levels?")
+    analyze_music_while_working(df, "plots/music_while_working.png")
     # analyze_age_psychological_state(df, "plots/") Nakonec nevyužijeme - bullshit otázka
+
+    print("\n\nRQ5: Does age affect how people perceive the effects of music?")
     analyze_age_music_effect(df, "plots/age_music_effect")
